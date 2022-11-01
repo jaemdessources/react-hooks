@@ -7,21 +7,20 @@ import * as React from 'react'
 import emojiList from '../emojiList'
 import Clipboard from 'clipboard'
 import '../04-styles.css'
+import ClipboardJS from 'clipboard'
 
 // 👨‍✈️ Créé l'application de recherche d'émojis selons les spécifications
 
 // 🐶 Nous allons traiter les composants un par un et pour rappel il faudra remonté les données
 // dans le composants principal <EmojiSearch />
 
-function Header({nbFound}) {
+function Header({nbFound = 0}) {
   // 🐶 Fais en sorte que le Header affiche 'Aucun résultat' ou 'X emojis trouvés' en fonction de nbFound
   return (
     <div className="component-header">
       <div>Recherche Emoji</div>
       <div className="reusult-found">
-        {/* 🤖 Utilise une ternaire  */}
-        {/* nbFound > 0 ? 'OK' : 'KO'    */}
-        Aucun résultat
+        {nbFound > 0 ? `${nbFound} emojis trouvés` : ' Aucun résultat'}
       </div>
     </div>
   )
@@ -31,13 +30,12 @@ function SearchInput({onTextChange}) {
   // 🐶 Crée une fonction onChange qui appelera la fonction onTextChange passée en props
   // Rappel : `event.target.value` permet de récuperer la valeur de l'input.
   // 🤖 onTextChange(event.target.value)
+  const onChange = e => onTextChange(e.target.value)
 
   return (
     <div className="component-search-input">
       <div>
-        {/* 🐶 Gère l'évènement onChange sur le champs input*/}
-        {/* 🤖 onChange={onChange}*/}
-        <input />
+        <input onChange={onChange} />
       </div>
     </div>
   )
@@ -46,24 +44,28 @@ function SearchInput({onTextChange}) {
 // 🐶 Gère le composant parent
 function EmojiSearch() {
   // 🐶 Créé un state `dataEmoji` qui contiendra un tableau d'émojis
-  // 🤖 const [dataEmoji, setDataEmoji]
+  const [dataEmoji, setDataEmoji] = React.useState([])
 
   // 🐶 Créé une fonction 'handleTextChange' qui prend en paramètre 'text' le texte saisie dans le champs Input
   // 🐶 Dans cette fonction, filtre les émojis avec la fonction `filterEmoji(text)`
   // 🐶 Met à jour le state 'dataEmoji'(`setDataEmoji`) avec la liste filtrée d'émojis
+
+  const handleTextChange = text => {
+    setDataEmoji(() => filterEmoji(text))
+  }
 
   // 🐶 Passe ensuite ces props aux composants enfants.
   return (
     <div>
       {/* 🐶 Passe le prop 'nbFound' au Header */}
       {/* 🤖 utilise dataEmoji.length */}
-      <Header />
+      <Header nbFound={dataEmoji.length} />
       {/* 🐶 Passe le prop 'onTextChange' à  SearchInput */}
       {/* 🤖 utilise dataEmoji.length */}
-      <SearchInput />
+      <SearchInput onTextChange={handleTextChange} />
       {/* 🐶 Passe le prop 'data' à Result */}
       {/* 🤖 data={dataEmoji} */}
-      <Result />
+      <Result data={dataEmoji} />
     </div>
   )
 }
@@ -81,9 +83,12 @@ function Result({data = []}) {
   // 🐶 Utilise 'useEffect' pour gérer l'instanciation de clipboard
   // 🤖 React.useEffect
   // 🤖 const clipboard = new Clipboard('.copy-to-clipboard')
+  React.useEffect(() => {
+    var clipboard = new ClipboardJS('.copy-to-clipboard')
 
-  // 🐶 N'oubllie pas de 'cleanup' detruire l'objet dans useEffect en retournant une fonction fléché
-  // 🤖 return () => { clipboard.destroy() }
+    return () => clipboard.destroy()
+  })
+
   return (
     <div className="component-emoji-results">
       {data.map(emojiData => (
@@ -105,7 +110,10 @@ function EmojiResultRow({symbol, title}) {
   // 🐶 Ajoute l'attribut data-clipboard-text à la div
   // 🤖 <div data-clipboard-text={symbol}
   return (
-    <div className="component-emoji-result-row">
+    <div
+      className="component-emoji-result-row copy-to-clipboard"
+      data-clipboard-text={symbol}
+    >
       {symbol}
       <span className="title">{title}</span>
       <span className="info">Copier</span>
@@ -119,7 +127,7 @@ function App() {
 export default App
 
 // eslint-disable-next-line no-unused-vars
-function filterEmoji(searchText, maxResults = 10) {
+function filterEmoji(searchText, maxResults = 12) {
   return emojiList
     .filter(emoji => {
       if (emoji.title.toLowerCase().includes(searchText.toLowerCase())) {

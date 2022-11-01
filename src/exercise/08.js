@@ -7,27 +7,50 @@ import React from 'react'
 // 🐶 Tu vas avoir besoin d'appeler l'API Marvel et d'utiliser 'MarvelPersoView'
 // pour afficher le detail d'un personnage Marvel.
 // importe donc 'fetchMarvel' 'MarvelPersoView' depuis '../marvel'
-import {MarvelSearchForm} from '../marvel'
+import {fetchMarvel, MarvelPersoView, MarvelSearchForm} from '../marvel'
 import '../08-styles.css'
 
 function MarvelDetails({marvelName}) {
-  // 🐶 Créé un state pour le personnage marvel
+  const [marvel, setMarvel] = React.useState()
+  const [error, setError] = React.useState()
+  React.useEffect(() => {
+    if (!marvelName) {
+      return
+    }
+    setMarvel(null)
+    fetchMarvel(marvelName)
+      .then(marvel => setMarvel(marvel))
+      .catch(error => setError(error))
+  }, [marvelName])
 
-  // 🐶 React.useEffect : utilise React.useEffect pour appeler l'API marvel quand le prop 'marvelName' change
-  // Attention aux dependances de useEffect []
-  // N'appelle pas l'API marvel si 'marvelName' n'est pas renseigné
-  // 🤖 if (!marvelName) { return }
-  // 🐶 Avant d'appeler `fetchMarvel` met le state marvel à null (nettoyage du précedent Marvel)
-  // 🤖 Appelle `fetchMarvel` :
-  //    fetchMarvel(marvelName)
-  //    .then(marvel => /* met à jour le state marvel ici */)
+  if (error) throw error
+  if (!marvelName) return 'Entre un nom de personnage Marvel'
+  if (!marvel) return 'Chargement...'
+  return <MarvelPersoView marvel={marvel} />
+}
 
-  // 🐶 retourne (render) 3 choses differentes en fonctions du state et prop
-  //  - 'Entrer un nom de personnage Marvel' si `marvelName` n'est pas renseigné
-  //  - 'chargement ...' si `marvel` n'est pas renseigné
-  //  - <MarvelPersoView marvel={marvel} sinon
+class ErrorBoundary extends React.Component {
+  state = {error: null}
 
-  return null
+  static getDerivedStateFromError(error) {
+    return {error}
+  }
+  render() {
+    const {FallBackComponent} = this.props
+    if (this.state.error) {
+      return <FallBackComponent error={this.state.error} />
+    }
+    return this.props.children
+  }
+}
+
+const FallBackComponent = ({error}) => {
+  return (
+    <div style={{color: 'red'}}>
+      Oops ! an error occured while loading your marvel character because:
+      <pre style={{color: 'grey'}}>{error.message}</pre>
+    </div>
+  )
 }
 
 function App() {
@@ -40,7 +63,9 @@ function App() {
     <div className="marvel-app">
       <MarvelSearchForm marvelName={marvelName} onSearch={handleSearch} />
       <div className="marvel-detail">
-        <MarvelDetails marvelName={marvelName} />
+        <ErrorBoundary key={marvelName} FallBackComponent={FallBackComponent}>
+          <MarvelDetails marvelName={marvelName} />
+        </ErrorBoundary>
       </div>
     </div>
   )

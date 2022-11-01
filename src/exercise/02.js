@@ -9,11 +9,9 @@ function Login({initialEmail = ''}) {
   const [email, setEmail] = React.useState(initialEmail)
   const handleChange = async event => setEmail(event.target.value)
 
-  // 🐶 Créé un Hook useEffect
-  // 🤖 React.useEffect(() => { ... })
-
-  // ⛏️ Supprime ce code et insère le dans useEffect
-  console.log('Email Value', document.getElementById('email').value)
+  React.useEffect(() => {
+    console.log('Email Value is', document.getElementById('email').value)
+  })
 
   return (
     <div>
